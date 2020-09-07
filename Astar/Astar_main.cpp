@@ -13,7 +13,7 @@ using namespace std;
 //
 // map : vector<vector<string>>
 // stone : #
-// path : *
+// path : .
 // start point and end point : @
 //
 
@@ -53,13 +53,13 @@ int main() {
 
     m->generateMap();
     m->showMaps();
-    cout << "====================================" << endl;
+    cout << "============================================" << endl;
     m->AStarAlgorithm();
     m->calculatePath();
     m->showPathsHadCalculate();
-    cout << "====================================" << endl;
+    cout << "============================================" << endl;
 
     m->showMapsWithPaths();
-    cout << "====================================" << endl;
+    cout << "============================================" << endl;
 
 }
