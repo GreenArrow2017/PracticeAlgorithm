@@ -115,7 +115,7 @@ public:
         visited_end.resize(nRow * nColumn);
         for (int i = 0; i < nRow; i++) {
             for (int j = 0; j < nColumn; j++) {
-                results[i][j] = '.';
+                results[i] += '.';
             }
         }
         for (int i = 0; i < walls.size(); i++) {
