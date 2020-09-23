@@ -12,13 +12,16 @@ public:
     vector<vector<int>> maps;
     vector<pair<pair<int, int>, pair<int, int>>> less_constraints;
     int nRow, nColumn;
+    //表示第x行中某个数字是否存在
     int Count_RowNumbers[9][10];
+    //表示第y列某个数字是否存在
     int Count_ColumnNumbers[9][10];
 
     void initial() {
 
 
 
+        //初始地图
         maps = {{0, 0, 0, 7, 3, 8, 0, 5, 0},
                 {0, 0, 7, 0, 0, 2, 0, 0, 0},
                 {0, 0, 0, 0, 0, 9, 0, 0, 0},
@@ -40,6 +43,7 @@ public:
                 }
             }
         }
+        //添加限制
         addConstraints(0, 0, 0, 1);
         addConstraints(0, 3, 0, 2);
         addConstraints(1, 3, 1, 4);
@@ -78,6 +82,7 @@ public:
                                     {x1, y1}});
     }
 
+    //检查当前位置是否可行
     bool check(int x, int y) {
         for (int i = 1; i < 10; i++) {
             if (Count_RowNumbers[x][i] > 1 || Count_ColumnNumbers[y][i] > 1) {
@@ -114,6 +119,7 @@ public:
         return true;
     }
 
+    //显示图片
     void show() {
         for (int i = 0; i < nRow; i++) {
             for (int j = 0; j < nColumn; j++) {
