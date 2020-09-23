@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <vector>
-
+#include<ctime>
 using namespace std;
 
 class FutoshikiPuzzle {
@@ -179,6 +179,10 @@ int main() {
     FutoshikiPuzzle *futoshikiPuzzle = new FutoshikiPuzzle();
     futoshikiPuzzle->initial();
     futoshikiPuzzle->show();
+    clock_t start,end;
+    start = clock();
     futoshikiPuzzle->search(0, 0);
+    end = clock();
     futoshikiPuzzle->show();
+    cout<< "BT Time cost : " <<(double)(end-start)/CLOCKS_PER_SEC << " s" << endl;
 }
