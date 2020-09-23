@@ -14,11 +14,15 @@ public:
 
     class node {
     public:
+        //当前位置的值
         int val = 0;
+        //候选队列，false代表可以选择
         bool digits[10] = {false, false, false, false, false, false, false, false, false, false};
     };
 
+    //地图
     vector<vector<node>> maps;
+    //限制
     vector<pair<pair<int, int>, pair<int, int>>> less_constraints;
     int nRow, nColumn;
 
@@ -37,6 +41,7 @@ public:
 
         maps.resize(nRow);
 
+        //复制到真实地图上
         for (int i = 0; i < nRow; i++) {
             maps[i].resize(nColumn);
             for (int j = 0; j < nColumn; j++) {
@@ -46,7 +51,7 @@ public:
 
 
 
-
+        //添加限制
         addConstraints(0, 0, 0, 1);
         addConstraints(0, 3, 0, 2);
         addConstraints(1, 3, 1, 4);
@@ -78,6 +83,7 @@ public:
         addConstraints(8, 8, 7, 8);
         addConstraints(8, 5, 8, 6);
 
+        //根据已经填写的数字开始删除各个位置的候选值
         for (int i = 0; i < nRow; i++) {
             for (int j = 0; j < nColumn; j++) {
                 vector<pair<pair<int, int>, int>> catches = check(i, j);
@@ -90,11 +96,13 @@ public:
                                     {x1, y1}});
     }
 
+    //删除候选值
     vector<pair<pair<int, int>, int>> check(int x, int y) {
-        //检查所有的值，把在队列中的候选值去掉
+        //缓存，如果失败可能需要回溯
         vector<pair<pair<int, int>, int>> catches;
-        //纵向删除候选值：
+        //纵向横向删除候选值：
         for (int i = 0; i < nRow; i++) {
+            //如果本来就是false，那就没必要加入缓存了
             if (!maps[i][y].digits[maps[x][y].val]) {
                 maps[i][y].digits[maps[x][y].val] = true;
                 //意思是在[i,y]格子的候选者中删除了maps[x][y].val候选者
@@ -107,6 +115,7 @@ public:
             }
         }
 
+        //删除关于限制的候选值
         for (int i = 0; i < less_constraints.size(); i++) {
             if (x == less_constraints[i].first.first && y == less_constraints[i].first.second) {
                 for (int j = maps[x][y].val; j >= 1; j--) {
@@ -135,6 +144,7 @@ public:
                 //还在队列中没有被访问过
                 if (!maps[x][y].digits[i]) {
                     maps[x][y].val = i;
+                    //返回缓存，缓存存储了三个特征，横坐标，纵坐标，删除的值。恢复只需要把候选队列中的值变为true即可。
                     vector<pair<pair<int, int>, int>> catches = check(x, y);
                     if (x == 8 && y == 8) {
                         return true;
@@ -152,11 +162,13 @@ public:
                     if (search(next_x, next_y)) {
                         return true;
                     }
+                    //查找失败，需要回退到上一版本。这里回退比较简单，只需要设置true即可
                     pull_back(catches);
                     maps[x][y].val = 0;
                 }
             }
         } else {
+            //当前位置已经填上，只需要跳过即可
             if (x == 8 && y == 8) {
                 return true;
             }
@@ -177,6 +189,7 @@ public:
         return false;
     }
 
+    //倒退。根据缓存倒退上一版本
     void pull_back(vector<pair<pair<int, int>, int>> catches) {
         for (int i = 0; i < catches.size(); i++) {
             int x = catches[i].first.first;
@@ -201,13 +214,18 @@ public:
 
 int main() {
     FutoshikiPuzzle *futoshikiPuzzle = new FutoshikiPuzzle();
+    //初始化
     futoshikiPuzzle->initial();
+    //显示空表
     futoshikiPuzzle->show();
+    //记录时间
     clock_t start,end;
     start = clock();
+    //开始搜索
     futoshikiPuzzle->search(0, 0);
     end = clock();
 
+    //显示最终结果
     futoshikiPuzzle->show();
 
     cout<< "FC Time cost : " <<(double)(end-start)/CLOCKS_PER_SEC << " s" << endl;
