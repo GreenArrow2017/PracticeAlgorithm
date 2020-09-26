@@ -1,5 +1,5 @@
 //
-// Created by GreenArrow on 2020/9/14.
+// Created by GreenArrow on 2020/9/26.
 //
 
 #include <iostream>
@@ -27,15 +27,15 @@ public:
     int nRow, nColumn;
 
     void initial() {
-        vector<vector<int>> copy_map = {{0, 0, 0, 7, 3, 8, 0, 5, 0},
-                                        {0, 0, 7, 0, 0, 2, 0, 0, 0},
-                                        {0, 0, 0, 0, 0, 9, 0, 0, 0},
-                                        {0, 0, 0, 4, 0, 0, 0, 0, 0},
-                                        {0, 0, 1, 0, 0, 0, 6, 4, 0},
-                                        {0, 0, 0, 0, 0, 0, 2, 0, 0},
+        vector<vector<int>> copy_map = {{6, 0, 0, 0, 0, 0, 0, 0, 0},
                                         {0, 0, 0, 0, 0, 0, 0, 0, 0},
                                         {0, 0, 0, 0, 0, 0, 0, 0, 0},
-                                        {0, 0, 0, 0, 0, 0, 0, 0, 6}};
+                                        {0, 0, 0, 0, 0, 0, 0, 7, 0},
+                                        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                        {0, 0, 0, 0, 0, 0, 0, 5, 8},
+                                        {0, 0, 0, 0, 0, 0, 0, 8, 0},
+                                        {0, 0, 0, 0, 0, 0, 0, 2, 4}};
         nRow = copy_map.size();
         nColumn = copy_map[0].size();
 
@@ -52,41 +52,55 @@ public:
 
 
         //添加限制
-        addConstraints(0, 0, 0, 1);
-        addConstraints(0, 3, 0, 2);
-        addConstraints(1, 3, 1, 4);
-        addConstraints(1, 6, 1, 7);
+        addConstraints(0, 0, 1, 0);
+        addConstraints(0, 6, 0, 5);
+        addConstraints(0, 7, 0, 8);
+        addConstraints(1, 3, 1, 2);
+        addConstraints(0, 4, 1, 4);
         addConstraints(2, 6, 1, 6);
-        addConstraints(2, 1, 2, 0);
+        addConstraints(1, 4, 1, 5);
+        addConstraints(3, 0, 2, 0);
+        addConstraints(3, 1, 2, 1);
+        addConstraints(2, 2, 3, 2);
         addConstraints(2, 2, 2, 3);
-        addConstraints(2, 3, 3, 3);
-        addConstraints(3, 3, 3, 2);
-        addConstraints(3, 5, 3, 4);
-        addConstraints(3, 5, 3, 6);
-        addConstraints(3, 8, 3, 7);
+        addConstraints(2, 6, 2, 5);
+        addConstraints(2, 7, 2, 8);
+        addConstraints(2, 3, 1, 3);
         addConstraints(4, 1, 3, 1);
+        addConstraints(3, 2, 4, 2);
+        addConstraints(3, 3, 4, 3);
         addConstraints(4, 5, 3, 5);
-        addConstraints(4, 0, 4, 1);
-        addConstraints(5, 4, 4, 4);
-        addConstraints(5, 8, 4, 8);
-        addConstraints(5, 1, 5, 2);
+        addConstraints(3, 5, 3, 6);
+        addConstraints(3, 6, 2, 6);
+        addConstraints(4, 7, 3, 7);
+        addConstraints(3, 8, 4, 8);
+        addConstraints(4, 2, 4, 1);
+        addConstraints(4, 4, 4, 5);
+        addConstraints(4, 5, 4, 6);
+        addConstraints(4, 8, 4, 7);
+        addConstraints(4, 6, 5, 6);
+        addConstraints(5, 0, 5, 1);
         addConstraints(5, 4, 5, 5);
+        addConstraints(5, 6, 5, 5);
         addConstraints(5, 7, 5, 6);
-        addConstraints(5, 1, 6, 1);
-        addConstraints(6, 6, 5, 6);
-        addConstraints(6, 8, 5, 8);
-        addConstraints(6, 3, 6, 4);
-        addConstraints(7, 7, 6, 7);
-        addConstraints(7, 1, 8, 1);
-        addConstraints(8, 2, 7, 2);
-        addConstraints(7, 5, 8, 5);
-        addConstraints(8, 8, 7, 8);
-        addConstraints(8, 5, 8, 6);
+        addConstraints(6, 6, 6, 5);
+        addConstraints(6, 0, 7, 0);
+        addConstraints(6, 1, 7, 1);
+        addConstraints(7, 3, 6, 3);
+        addConstraints(7, 4, 6, 4);
+        addConstraints(8, 5, 7, 5);
+        addConstraints(7, 5, 7, 6);
+        addConstraints(7, 6, 7, 7);
+        addConstraints(7, 8, 8, 8);
+        addConstraints(8, 1, 8, 0);
+        addConstraints(8, 2, 8, 1);
+        addConstraints(8, 4, 8, 3);
 
         //根据已经填写的数字开始删除各个位置的候选值
         for (int i = 0; i < nRow; i++) {
             for (int j = 0; j < nColumn; j++) {
-                vector<pair<pair<int, int>, int>> catches = check(i, j);
+                if (maps[i][j].val != 0)
+                    vector<pair<pair<int, int>, int>> catches = check(i, j);
             }
         }
     }
@@ -127,7 +141,7 @@ public:
             }
 
             if (x == less_constraints[i].second.first && y == less_constraints[i].second.second) {
-                for (int j = 1; j <= maps[x][y].val; j++) {
+                for (int j = maps[x][y].val; j <= 9; j++) {
                     if (!maps[less_constraints[i].first.first][less_constraints[i].first.second].digits[j]) {
                         maps[less_constraints[i].first.first][less_constraints[i].first.second].digits[j] = true;
                         catches.push_back({{less_constraints[i].first.first, less_constraints[i].first.second}, j});
@@ -219,7 +233,7 @@ int main() {
     //显示空表
     futoshikiPuzzle->show();
     //记录时间
-    clock_t start,end;
+    clock_t start, end;
     start = clock();
     //开始搜索
     futoshikiPuzzle->search(0, 0);
@@ -228,5 +242,5 @@ int main() {
     //显示最终结果
     futoshikiPuzzle->show();
 
-    cout<< "FC Time cost : " <<(double)(end-start)/CLOCKS_PER_SEC << " s" << endl;
+    cout << "FC Time cost : " << (double) (end - start) / CLOCKS_PER_SEC << " s" << endl;
 }
