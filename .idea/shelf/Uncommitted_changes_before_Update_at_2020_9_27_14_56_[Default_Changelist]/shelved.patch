@@ -1,0 +1,276 @@
+Index: Futoshiki/forward_checking_version2.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- Futoshiki/forward_checking_version2.cpp	(date 1600845743165)
++++ Futoshiki/forward_checking_version2.cpp	(date 1600845743165)
+@@ -0,0 +1,248 @@
++//
++// Created by GreenArrow on 2020/9/20.
++//
++
++#include <iostream>
++#include <vector>
++#include <map>
++#include<ctime>
++#include <queue>
++
++using namespace std;
++
++class FutoshikiPuzzle {
++public:
++
++    class node {
++    public:
++        //当前位置的值
++        int val = 0;
++        //候选队列，false代表可以选择
++        bool digits[10] = {false, false, false, false, false, false, false, false, false, false};
++
++        int count_digits = 9;
++    };
++
++    priority_queue<pair<int, pair<int, int>>> node_sort;
++
++    //地图
++    vector<vector<node>> maps;
++    //限制
++    vector<pair<pair<int, int>, pair<int, int>>> less_constraints;
++    int nRow, nColumn;
++
++    void initial() {
++        vector<vector<int>> copy_map = {{0, 0, 0, 7, 3, 8, 0, 5, 0},
++                                        {0, 0, 7, 0, 0, 2, 0, 0, 0},
++                                        {0, 0, 0, 0, 0, 9, 0, 0, 0},
++                                        {0, 0, 0, 4, 0, 0, 0, 0, 0},
++                                        {0, 0, 1, 0, 0, 0, 6, 4, 0},
++                                        {0, 0, 0, 0, 0, 0, 2, 0, 0},
++                                        {0, 0, 0, 0, 0, 0, 0, 0, 0},
++                                        {0, 0, 0, 0, 0, 0, 0, 0, 0},
++                                        {0, 0, 0, 0, 0, 0, 0, 0, 6}};
++        nRow = copy_map.size();
++        nColumn = copy_map[0].size();
++
++        maps.resize(nRow);
++
++        //复制到真实地图上
++        for (int i = 0; i < nRow; i++) {
++            maps[i].resize(nColumn);
++            for (int j = 0; j < nColumn; j++) {
++                maps[i][j].val = copy_map[i][j];
++            }
++        }
++
++
++
++        //添加限制
++        addConstraints(0, 0, 0, 1);
++        addConstraints(0, 3, 0, 2);
++        addConstraints(1, 3, 1, 4);
++        addConstraints(1, 6, 1, 7);
++        addConstraints(2, 6, 1, 6);
++        addConstraints(2, 1, 2, 0);
++        addConstraints(2, 2, 2, 3);
++        addConstraints(2, 3, 3, 3);
++        addConstraints(3, 3, 3, 2);
++        addConstraints(3, 5, 3, 4);
++        addConstraints(3, 5, 3, 6);
++        addConstraints(3, 8, 3, 7);
++        addConstraints(4, 1, 3, 1);
++        addConstraints(4, 5, 3, 5);
++        addConstraints(4, 0, 4, 1);
++        addConstraints(5, 4, 4, 4);
++        addConstraints(5, 8, 4, 8);
++        addConstraints(5, 1, 5, 2);
++        addConstraints(5, 4, 5, 5);
++        addConstraints(5, 7, 5, 6);
++        addConstraints(5, 1, 6, 1);
++        addConstraints(6, 6, 5, 6);
++        addConstraints(6, 8, 5, 8);
++        addConstraints(6, 3, 6, 4);
++        addConstraints(7, 7, 6, 7);
++        addConstraints(7, 1, 8, 1);
++        addConstraints(8, 2, 7, 2);
++        addConstraints(7, 5, 8, 5);
++        addConstraints(8, 8, 7, 8);
++        addConstraints(8, 5, 8, 6);
++
++        //根据已经填写的数字开始删除各个位置的候选值
++        for (int i = 0; i < nRow; i++) {
++            for (int j = 0; j < nColumn; j++) {
++                vector<pair<pair<int, int>, int>> catches = check(i, j);
++            }
++        }
++
++        for (int i = 0; i < nRow; i++) {
++            for (int j = 0; j < nColumn; j++) {
++
++            }
++        }
++    }
++
++    void addConstraints(int x, int y, int x1, int y1) {
++        less_constraints.push_back({{x,  y},
++                                    {x1, y1}});
++    }
++
++    //删除候选值
++    vector<pair<pair<int, int>, int>> check(int x, int y) {
++        //缓存，如果失败可能需要回溯
++        vector<pair<pair<int, int>, int>> catches;
++        //纵向横向删除候选值：
++        for (int i = 0; i < nRow; i++) {
++            //如果本来就是false，那就没必要加入缓存了
++            if (!maps[i][y].digits[maps[x][y].val]) {
++                maps[i][y].digits[maps[x][y].val] = true;
++                maps[i][y].count_digits--;
++                //意思是在[i,y]格子的候选者中删除了maps[x][y].val候选者
++                catches.push_back({{i, y}, maps[x][y].val});
++            }
++
++            if (!maps[x][i].digits[maps[x][y].val]) {
++                maps[x][i].digits[maps[x][y].val] = true;
++                maps[x][i].count_digits--;
++                catches.push_back({{x, i}, maps[x][y].val});
++            }
++        }
++
++        //删除关于限制的候选值
++        for (int i = 0; i < less_constraints.size(); i++) {
++            if (x == less_constraints[i].first.first && y == less_constraints[i].first.second) {
++                for (int j = maps[x][y].val; j >= 1; j--) {
++                    if (!maps[less_constraints[i].second.first][less_constraints[i].second.second].digits[j]) {
++                        maps[less_constraints[i].second.first][less_constraints[i].second.second].digits[j] = true;
++                        maps[less_constraints[i].second.first][less_constraints[i].second.second].count_digits--;
++                        catches.push_back({{less_constraints[i].second.first, less_constraints[i].second.second}, j});
++                    }
++                }
++            }
++
++            if (x == less_constraints[i].second.first && y == less_constraints[i].second.second) {
++                for (int j = 1; j <= maps[x][y].val; j++) {
++                    if (!maps[less_constraints[i].first.first][less_constraints[i].first.second].digits[j]) {
++                        maps[less_constraints[i].first.first][less_constraints[i].first.second].digits[j] = true;
++                        maps[less_constraints[i].first.first][less_constraints[i].first.second].count_digits--;
++                        catches.push_back({{less_constraints[i].first.first, less_constraints[i].first.second}, j});
++                    }
++                }
++            }
++        }
++        return catches;
++    }
++
++    bool search(int x, int y) {
++        if (maps[x][y].val == 0) {
++            for (int i = 1; i < 10; i++) {
++                //还在队列中没有被访问过
++                if (!maps[x][y].digits[i]) {
++                    maps[x][y].val = i;
++                    //返回缓存，缓存存储了三个特征，横坐标，纵坐标，删除的值。恢复只需要把候选队列中的值变为true即可。
++                    vector<pair<pair<int, int>, int>> catches = check(x, y);
++                    if (x == 8 && y == 8) {
++                        return true;
++                    }
++                    int next_x, next_y;
++                    if (y != 8) {
++                        next_x = x;
++                        next_y = y + 1;
++                    } else {
++                        next_x = x + 1;
++                        next_y = 0;
++                    }
++
++
++                    if (search(next_x, next_y)) {
++                        return true;
++                    }
++                    //查找失败，需要回退到上一版本。这里回退比较简单，只需要设置true即可
++                    pull_back(catches);
++                    maps[x][y].val = 0;
++                }
++            }
++        } else {
++            //当前位置已经填上，只需要跳过即可
++            if (x == 8 && y == 8) {
++                return true;
++            }
++            int next_x, next_y;
++            if (y != 8) {
++                next_x = x;
++                next_y = y + 1;
++            } else {
++                next_x = x + 1;
++                next_y = 0;
++            }
++
++
++            if (search(next_x, next_y)) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    //倒退。根据缓存倒退上一版本
++    void pull_back(vector<pair<pair<int, int>, int>> catches) {
++        for (int i = 0; i < catches.size(); i++) {
++            int x = catches[i].first.first;
++            int y = catches[i].first.second;
++            int digit = catches[i].second;
++            maps[x][y].digits[digit] = false;
++            maps[x][y].count_digits++;
++        }
++    }
++
++    void show() {
++        for (int i = 0; i < nRow; i++) {
++            for (int j = 0; j < nColumn; j++) {
++                cout << maps[i][j].val << " ";
++            }
++            cout << endl;
++        }
++        cout << "======================" << endl;
++    }
++
++
++};
++
++int main() {
++    FutoshikiPuzzle *futoshikiPuzzle = new FutoshikiPuzzle();
++    //初始化
++    futoshikiPuzzle->initial();
++    //显示空表
++    futoshikiPuzzle->show();
++    //记录时间
++    clock_t start, end;
++    start = clock();
++    //开始搜索
++    futoshikiPuzzle->search(0, 0);
++    end = clock();
++
++    //显示最终结果
++    futoshikiPuzzle->show();
++
++    cout << "FC Time cost : " << (double) (end - start) / CLOCKS_PER_SEC << " s" << endl;
++}
+\ No newline at end of file
+Index: CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>cmake_minimum_required(VERSION 3.15)\r\nproject(PracticeAlgorithm)\r\n\r\nset(CMAKE_CXX_STANDARD 14)\r\n\r\nadd_executable(PracticeAlgorithm main.cpp)\r\nadd_executable(MaryGame LUOGU/marygame.cpp)\r\nadd_executable(A+B LUOGU/A+BProblem.cpp)\r\nadd_executable(1002 PAT/1002.cpp)\r\nadd_executable(1003 PAT/1003.cpp)\r\nadd_executable(1004 PAT/1004.cpp)\r\nadd_executable(1005 PAT/1005.cpp)\r\nadd_executable(1006 PAT/1006.cpp)\r\nadd_executable(1007 PAT/1007.cpp)\r\nadd_executable(1008 PAT/1008.cpp)\r\nadd_executable(1009 PAT/1009.cpp)\r\nadd_executable(1010 PAT/1010.cpp)\r\nadd_executable(1011 PAT/1011.cpp)\r\nadd_executable(1012 PAT/1012.cpp)\r\nadd_executable(1013 PAT/1013.cpp)\r\nadd_executable(1014 PAT/1014.cpp)\r\nadd_executable(1015 PAT/1015.cpp)\r\nadd_executable(1032 PAT/1032.cpp)\r\nadd_executable(1023 PAT/1023.cpp)\r\nadd_executable(1020 PAT/1020.cpp)\r\nadd_executable(A1043 PAT/A1043.cpp)\r\nadd_executable(tree Codeup/lastTree.cpp)\r\nadd_executable(CodeupA+B Codeup/A+B.cpp)\r\nadd_executable(special Codeup/special.cpp)\r\nadd_executable(oe Codeup/OddAndEven.cpp)\r\nadd_executable(shortestDistance Codeup/ShortestDistance.cpp)\r\nadd_executable(ABC Codeup/A+BC.cpp)\r\nadd_executable(number Codeup/numberClassify.cpp)\r\nadd_executable(AB Codeup/partialA+B.cpp)\r\nadd_executable(CBJ Codeup/stoneno.cpp)\r\nadd_executable(findX Codeup/findX.cpp)\r\nadd_executable(findStu Codeup/findStu.cpp)\r\nadd_executable(find Codeup/find.cpp)\r\nadd_executable(stu Codeup/Stu.cpp)\r\nadd_executable(Cube Codeup/cube.cpp)\r\nadd_executable(Ladder Codeup/ladder.cpp)\r\nadd_executable(U Codeup/printU.cpp)\r\nadd_executable(goodladder Codeup/goodladder.cpp)\r\nadd_executable(triggle Codeup/triggle.cpp)\r\nadd_executable(day Codeup/minusDay.cpp)\r\nadd_executable(DayOfWeek Codeup/DayOfWeek.cpp)\r\nadd_executable(printDay Codeup/printDay.cpp)\r\nadd_executable(test Codeup/addOneDay.cpp)\r\nadd_executable(addCalculate Codeup/addCalculate.cpp)\r\nadd_executable(1022 PAT/1022.cpp)\r\nadd_executable(another Codeup/anotherA+B.cpp)\r\nadd_executable(exchangeNumber Codeup/exchangeNumber.cpp)\r\nadd_executable(two Codeup/exchangeTwo.cpp)\r\nadd_executable(BigDecimal Codeup/BigDecimal.cpp)\r\nadd_executable(Eight Codeup/eight.cpp)\r\nadd_executable(connectString Codeup/connectString.cpp)\r\nadd_executable(BigAlpha Codeup/BigApha.cpp)\r\nadd_executable(deleteAlpha Codeup/deleteAlpha.cpp)\r\nadd_executable(alterWord Codeup/alterWord.cpp)\r\nadd_executable(deleteChar Codeup/deleteChar.cpp)\r\nadd_executable(reverseArray Codeup/reverseArray.cpp)\r\nadd_executable(compare2string Codeup/compare2string.cpp)\r\nadd_executable(arrangeString Codeup/arrangeString.cpp)\r\nadd_executable(frontAndbackString Codeup/frontAndbackString.cpp)\r\nadd_executable(A1025 PAT/A1025.cpp)\r\nadd_executable(sort Codeup/sort.cpp)\r\nadd_executable(specialSort Codeup/specialSort.cpp)\r\nadd_executable(excelSort Codeup/excelSort.cpp)\r\nadd_executable(stringSort Codeup/stringSort.cpp)\r\nadd_executable(metric Codeup/metricSort.cpp)\r\nadd_executable(rat Codeup/rat.cpp)\r\nadd_executable(oddevenSort Codeup/oddevenSort.cpp)\r\nadd_executable(whoseFriends Codeup/whoseFirends.cpp)\r\nadd_executable(BeUnique Codeup/BeUnique.cpp)\r\nadd_executable(StringSubtraction Codeup/StringSubtraction.cpp)\r\nadd_executable(eatCandy Codeup/eatCandy.cpp)\r\nadd_executable(series Codeup/series.cpp)\r\nadd_executable(specialPacket Codeup/specialPacket.cpp)\r\nadd_executable(eightQueen Codeup/eightQueen.cpp)\r\nadd_executable(watchTV Codeup/watchTV.cpp)\r\nadd_executable(pay Codeup/payCharge.cpp)\r\nadd_executable(ToFillorNottoFill Codeup/ToFillorNottoFill.cpp)\r\nadd_executable(simplyCalculate Codeup/simplyCalculate.cpp)\r\nadd_executable(stack_problemE Codeup/problemE.cpp)\r\nadd_executable(exchange_number Codeup/exchange_Number.cpp)\r\nadd_executable(linklist Codeup/linklistOption.cpp)\r\nadd_executable(sortLinklist Codeup/sortLinklist.cpp)\r\nadd_executable(mergeList Codeup/mergeList.cpp)\r\nadd_executable(quaryList Codeup/quaryList.cpp)\r\nadd_executable(reverseList Codeup/reverseList.cpp)\r\nadd_executable(deletduplication Codeup/deleteDuplicationList.cpp)\r\nadd_executable(A1032 PAT/A1032.cpp)\r\nadd_executable(arrangeNumber Codeup/arrangeNumber.cpp)\r\nadd_executable(outputCombine Codeup/outputCombine.cpp)\r\nadd_executable(combinePrimeNumber Codeup/combineAndPrimeNumber.cpp)\r\nadd_executable(Nqueen Codeup/NQueen.cpp)\r\nadd_executable(squenceOfStack Codeup/squenceOfStack.cpp)\r\nadd_executable(maze Codeup/maze.cpp)\r\nadd_executable(DFSorBFS Codeup/DFSorBFS.cpp)\r\nadd_executable(eightNumberCode Codeup/eightNumberCode.cpp)\r\nadd_executable(magicCube Codeup/magicCube.cpp)\r\nadd_executable(pourWater Codeup/pourWater.cpp)\r\nadd_executable(pourWater2 Codeup/pourWater_version2.cpp)\r\nadd_executable(A1020 PAT/A1020.cpp)\r\nadd_executable(rebuildTree Codeup/rebuildTree.cpp)\r\nadd_executable(binaryTree Codeup/binaryTree.cpp)\r\nadd_executable(preAndInPost Codeup/preAndInToPost.cpp)\r\nadd_executable(BinaryTreeTraversal Codeup/BinaryTreeTraveral.cpp)\r\nadd_executable(searchTree Codeup/searchTree.cpp)\r\nadd_executable(getDepth Codeup/getDepth.cpp)\r\nadd_executable(sortTree Codeup/sortTree.cpp)\r\nadd_executable(sortTree2 Codeup/sortTree2.cpp)\r\nadd_executable(1106ProblemA Codeup/9.6-1106-problemA.cpp)\r\nadd_executable(1953ProblemB Codeup/9.6-1953-problemB.cpp)\r\nadd_executable(1798ProblemA Codeup/10.3-1798-ProblemA.cpp)\r\nadd_executable(1908ProblemB Codeup/10.3-1908-ProblemB.cpp)\r\nadd_executable(1768ProblemA Codeup/10.4-1768-ProblemA.cpp)\r\nadd_executable(1769ProblemB Codeup/10.4-1769-ProblemB.cpp)\r\nadd_executable(ProblemC Codeup/10.4-ProblemC.cpp)\r\nadd_executable(ProblemD Codeup/10.4-problemD.cpp)\r\nadd_executable(ProblemE Codeup/10.4-ProblemE.cpp)\r\nadd_executable(P2661 LUOGU/P2661.cpp)\r\nadd_executable(10.5ProblemA Codeup/10.5-ProblemA.cpp \"Leecode/剑指offer 59-II.cpp\" Leecode/78.cpp \"Leecode/面试题 08.12.cpp\")\r\nadd_executable(10.5ProblemB Codeup/10.5-ProblemB.cpp)\r\nadd_executable(10.5ProblemC Codeup/10.5-ProblemC.cpp)\r\nadd_executable(10.5ProblemD Codeup/10.5-ProblemD.cpp)\r\nadd_executable(10.5ProblemE Codeup/10.5-ProblemE-JungleRoads.cpp)\r\nadd_executable(P1421 LUOGU/P1421.cpp)\r\nadd_executable(P1425 LUOGU/P1425.cpp)\r\nadd_executable(P1422 LUOGU/P1422.cpp)\r\nadd_executable(P1085 LUOGU/P1085.cpp)\r\nadd_executable(P1089 LUOGU/P1089.cpp)\r\nadd_executable(P1909 LUOGU/P1909.cpp)\r\nadd_executable(P1035 LUOGU/P1035.cpp)\r\nadd_executable(P1423 LUOGU/P1423.cpp)\r\nadd_executable(P1424 LUOGU/P1424.cpp)\r\nadd_executable(P1980 LUOGU/P1980.cpp)\r\nadd_executable(1016 PAT/1016.cpp)\r\nadd_executable(A1001 PAT/A1001.cpp)\r\nadd_executable(P1603 LUOGU/P1603.cpp)\r\nadd_executable(P1071 LUOGU/P1071.cpp)\r\nadd_executable(P1012 LUOGU/P1012.cpp)\r\nadd_executable(P1538 LUOGU/P1538.cpp)\r\nadd_executable(P1219 LUOGU/P1219.cpp)\r\nadd_executable(P1019 LUOGU/P1019.cpp)\r\nadd_executable(P1605 LUOGU/P1605.cpp)\r\nadd_executable(P1101 LUOGU/P1101.cpp)\r\nadd_executable(P1162 LUOGU/P1162.cpp)\r\nadd_executable(P1032 LUOGU/P1032.cpp)\r\nadd_executable(P1141 LUOGU/P1141.cpp)\r\nadd_executable(P1443 LUOGU/P1443.cpp)\r\nadd_executable(P1996 LUOGU/P1996.cpp)\r\nadd_executable(P1115 LUOGU/P1115.cpp)\r\nadd_executable(P1739 LUOGU/P1739.cpp)\r\nadd_executable(P1160 LUOGU/P1160.cpp)\r\nadd_executable(P1449 LUOGU/P1449.cpp)\r\nadd_executable(P1087 LUOGU/P1087.cpp)\r\nadd_executable(P1030 LUOGU/P1030.cpp)\r\nadd_executable(P1305 LUOGU/P1305.cpp)\r\nadd_executable(P5018 LUOGU/P5018.cpp)\r\nadd_executable(P1339 LUOGU/P1339.cpp)\r\nadd_executable(P1546 LUOGU/P1546.cpp)\r\nadd_executable(P2330 LUOGU/P2330.cpp)\r\nadd_executable(P1265 LUOGU/P1265.cpp)\r\nadd_executable(P1991 LUOGU/P1991.cpp)\r\nadd_executable(A1136 PAT/A1136.cpp)\r\nadd_executable(A1139 PAT/A1139.cpp)\r\nadd_executable(A1143 PAT/A1143.cpp)\r\nadd_executable(A1148 PAT/A1148.cpp)\r\nadd_executable(A1005 PAT/A1005.cpp)\r\nadd_executable(A1035 PAT/A1035.cpp)\r\nadd_executable(A1061 PAT/A1061.cpp)\r\nadd_executable(A1073 PAT/A1073.cpp)\r\nadd_executable(A1077 PAT/A1077.cpp)\r\nadd_executable(A1108 PAT/A1108.cpp)\r\nadd_executable(A1140 PAT/A1140.cpp)\r\nadd_executable(A1152 PAT/A1152.cpp)\r\nadd_executable(A1002 PAT/A1002.cpp)\r\nadd_executable(A1009 PAT/A1009.cpp)\r\nadd_executable(A1110 PAT/A1110.cpp)\r\nadd_executable(A1064 PAT/A1064.cpp)\r\nadd_executable(A1099 PAT/A1099.cpp)\r\nadd_executable(A1053 PAT/A1053.cpp)\r\nadd_executable(A1086 PAT/A1086.cpp)\r\nadd_executable(A1090 PAT/A1090.cpp)\r\nadd_executable(A1102 PAT/A1102.cpp)\r\nadd_executable(A1106 PAT/A1106.cpp)\r\nadd_executable(A1115 PAT/A1115.cpp)\r\nadd_executable(A1119 PAT/A1119.cpp)\r\nadd_executable(A1038 PAT/A1038.cpp)\r\nadd_executable(A1147 PAT/A1147.cpp)\r\nadd_executable(A1151 PAT/A1151.cpp)\r\nadd_executable(A1122 PAT/A1122.cpp)\r\nadd_executable(A1142 PAT/A1142.cpp)\r\nadd_executable(A1150 PAT/A1150.cpp)\r\nadd_executable(A1126 PAT/A1126.cpp)\r\nadd_executable(A1013 PAT/A1013.cpp)\r\nadd_executable(A1021 PAT/A1021.cpp)\r\nadd_executable(A1034 PAT/A1034.cpp)\r\nadd_executable(A1003 PAT/A1003.cpp)\r\nadd_executable(A1018 PAT/A1018.cpp)\r\nadd_executable(A1030 PAT/A1030.cpp)\r\nadd_executable(A1087 PAT/A1087.cpp)\r\nadd_executable(A1111 PAT/A1111.cpp)\r\nadd_executable(A1004 PAT/A1004.cpp)\r\nadd_executable(A1076 PAT/A1076.cpp)\r\nadd_executable(A1079 PAT/A1079.cpp)\r\nadd_executable(A1094 PAT/A1094.cpp)\r\nadd_executable(A1103 PAT/A1103.cpp)\r\nadd_executable(A1127 PAT/A1127.cpp)\r\nadd_executable(A1130 PAT/A1130.cpp)\r\nadd_executable(A1131 PAT/A1131.cpp)\r\nadd_executable(A1006 PAT/A1006.cpp)\r\nadd_executable(A1007 PAT/A1007.cpp)\r\nadd_executable(A1008 PAT/A1008.cpp)\r\nadd_executable(A1048 PAT/A1048.cpp)\r\nadd_executable(A1010 PAT/A1010.cpp)\r\nadd_executable(A1011 PAT/A1011.cpp)\r\nadd_executable(A1012 PAT/A1012.cpp)\r\nadd_executable(A1015 PAT/A1015.cpp)\r\nadd_executable(A1019 PAT/A1019.cpp)\r\nadd_executable(A1022 PAT/A1022.cpp)\r\nadd_executable(A1023 PAT/A1023.cpp)\r\nadd_executable(Astar Astar/Astar_main.cpp)\r\nadd_executable(Leecode4 Leecode/4.cpp)\r\nadd_executable(Leecode11 Leecode/11.cpp)\r\nadd_executable(Leecode8 Leecode/8.cpp)\r\nadd_executable(Leecode1343 Leecode/1343.cpp)\r\nadd_executable(Leecode1144 Leecode/1144.cpp)\r\nadd_executable(Leecode62 Leecode/62.cpp)\r\nadd_executable(Leecode1414 Leecode/1414.cpp)\r\nadd_executable(Leecode5 Leecode/5.cpp)\r\nadd_executable(Leecode124 Leecode/124.cpp)\r\nadd_executable(Leecode329 Leecode/329.cpp)\r\nadd_executable(Leecode1391 Leecode/1391.cpp)\r\nadd_executable(Leecode110 Leecode/110.cpp)\r\nadd_executable(Leecode7 Leecode/7.cpp)\r\nadd_executable(Leecode743 Leecode/743.cpp)\r\nadd_executable(Leecode1514 Leecode/1514.cpp)\r\nadd_executable(Leecode400 Leecode/400.cpp)\r\nadd_executable(Leecode104 Leecode/104.cpp)\r\nadd_executable(Leecode997 Leecode/997.cpp)\r\nadd_executable(Leecode130 Leecode/130.cpp)\r\nadd_executable(Leecode529 Leecode/529.cpp)\r\nadd_executable(Leecode542 Leecode/542.cpp)\r\nadd_executable(Leecode1042 Leecode/1042.cpp)\r\nadd_executable(Leecode972 Leecode/972.cpp)\r\nadd_executable(Leecode990 Leecode/990.cpp)\r\nadd_executable(Leecode1387 Leecode/1387.cpp)\r\nadd_executable(Leecode1267 Leecode/1267.cpp)\r\nadd_executable(Leecode1162 Leecode/1162.cpp)\r\nadd_executable(Leecode5483 Leecode/5483.cpp)\r\nadd_executable(Leecode1306 Leecode/1306.cpp)\r\nadd_executable(Leecode473 Leecode/473.cpp)\r\nadd_executable(Leecode54 Leecode/54.cpp)\r\nadd_executable(Leecode1129 Leecode/1129.cpp)\r\nadd_executable(Leecode51 Leecode/51.cpp)\r\nadd_executable(Leecode886 Leecode/886.cpp)\r\nadd_executable(BT Futoshiki/Futoshiki_puzzle.cpp)\r\nadd_executable(FC Futoshiki/forwardChecking.cpp)\r\nadd_executable(Suduku Leecode/37.cpp)\r\nadd_executable(78 Leecode/78.cpp)
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- CMakeLists.txt	(revision b9728df1ab39b5d9eb6983c23d0f4fd9e1cc3e56)
++++ CMakeLists.txt	(date 1600845312991)
+@@ -256,7 +256,7 @@
+ add_executable(Leecode1129 Leecode/1129.cpp)
+ add_executable(Leecode51 Leecode/51.cpp)
+ add_executable(Leecode886 Leecode/886.cpp)
+-add_executable(BT Futoshiki/Futoshiki_puzzle.cpp)
++add_executable(BT Futoshiki/Futoshiki_puzzle.cpp Futoshiki/forward_checking_version2.cpp)
+ add_executable(FC Futoshiki/forwardChecking.cpp)
+ add_executable(Suduku Leecode/37.cpp)
+ add_executable(78 Leecode/78.cpp)
+\ No newline at end of file
